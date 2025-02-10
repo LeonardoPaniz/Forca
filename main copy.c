@@ -289,7 +289,7 @@ void play(char tabela[10][100]) {
             ganhou = 1;
         }
 
-    } while (tentativas > 0 && ganhou == 0);
+    } while (tentativas > 0 || ganhou == 0);
 
     if (tentativas == 0) {
         printf("Obrigado por jogar, espero nos ver em breve.\n\n");
