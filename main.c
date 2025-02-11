@@ -3,6 +3,44 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define ARQUIVO "palavras.txt"
+
+void carregarPalavras(char tabela[10][100]) {
+    FILE *file = fopen(ARQUIVO, "r");
+
+    if (file == NULL) {
+        printf("Arquivo de palavras não encontrado. Criando um novo arquivo...\n");
+        file = fopen(ARQUIVO, "w");
+        fclose(file);
+        return;
+    }
+
+    int i = 0;
+    while (fgets(tabela[i], 100, file) != NULL && i < 10) {
+        tabela[i][strcspn(tabela[i], "\n")] = '\0';
+        i++;
+    }
+
+    fclose(file);
+}
+
+void salvarPalavras(char tabela[10][100]) {
+    FILE *file = fopen(ARQUIVO, "w");
+
+    if (file == NULL) {
+        printf("Erro ao salvar as palavras no arquivo.\n");
+        return;
+    }
+
+    for (int i = 0; i < 10; i++) {
+        if (tabela[i][0] != '\0') {
+            fprintf(file, "%s\n", tabela[i]);
+        }
+    }
+
+    fclose(file);
+}
+
 void cadastrarPalavra(char tabela[10][100]) {
     char palavra[100];
     int livre = -1;
@@ -37,6 +75,7 @@ void cadastrarPalavra(char tabela[10][100]) {
             }
             if (haveNumbers == 0) {
                 strcpy(tabela[livre], palavra);
+                salvarPalavras(tabela);
                 printf("\nPalavra cadastrada com sucesso!\n");
             } else {
                 printf("Palavra contem caracteres invalidos!\n");
@@ -91,6 +130,7 @@ void atualizarPalavra(char tabela[10][100]) {
 
             if (haveNumbers == 0) {
                 strcpy(tabela[option - 1], palavra);
+                salvarPalavras(tabela);
                 printf("Palavra Atualizada com sucesso!\n");
             } else {
                 printf("Palavra contem caracteres invalidos!\n");
@@ -112,6 +152,7 @@ void apagarPalavra(char tabela[10][100]) {
 
     if (option > 0 && option <= 10 && tabela[option - 1][0] != '\0') {
         tabela[option - 1][0] = '\0';
+        salvarPalavras(tabela);
         printf("Palavra apagada com sucesso!\n");
     } else {
         printf("Opção inválida!\n");
@@ -121,30 +162,29 @@ void apagarPalavra(char tabela[10][100]) {
 void subMenu(char tabela[10][100]) {
     int opcao = 0;
     do {
-        printf("\n----------- MENU -----------\n");
-        printf("1) Novo Jogo\n");
-        printf("2) Menu Inicial\n");
-        printf("3) Sair\n");
-        printf("-----------------------------\n");
-        printf("Qual operação deseja realizar: ");
+        printf("\n----------- SUBMENU -----------\n");
+        printf("1) Jogar novamente\n");
+        printf("2) Retornar ao menu principal\n");
+        printf("3) Sair do jogo\n");
+        printf("-------------------------------\n");
+        printf("Escolha uma opção: ");
         scanf(" %d", &opcao);
 
         switch (opcao) {
         case 1:
-            play(tabela[10][100]);
+            play(tabela);
             break;
         case 2:
-            main();
-            break;
+            return;
         case 3:
+            printf("\n\n=======================================\n");
+            printf("Obrigado por jogar a forca! Até logo!\n");
             printf("=======================================\n");
-            printf("Muito obrigado por jogar a forca!\n");
-            printf("=======================================\n");
-            break;
+            exit(0);
         default:
-            printf("Opção inválida. Tente novamente.\n\n");
+            printf("Opção inválida! Tente novamente.\n");
         }
-    } while (opcao != 3);
+    } while (1);
 }
 
 void play(char tabela[10][100]) {
@@ -155,7 +195,6 @@ void play(char tabela[10][100]) {
     int randomNumber = rand() % 10;
     strcpy(palavra, tabela[randomNumber]);
 
-    // Converte a palavra para caixa alta
     for (int i = 0; palavra[i] != '\0'; i++) {
         palavra[i] = toupper(palavra[i]);
     }
@@ -180,10 +219,8 @@ void play(char tabela[10][100]) {
             printf("\n\nDigite seu palpite (apenas uma letra): ");
             scanf(" %c", &palpite);
 
-            // Converte o palpite para caixa alta
             palpite = toupper(palpite);
 
-            // Verifica se é uma letra válida
             if (!isalpha(palpite)) {
                 printf("Entrada inválida! Por favor, insira apenas uma letra do alfabeto.\n");
                 continue;
@@ -242,12 +279,12 @@ void play(char tabela[10][100]) {
         printf("\nPontuação: %i  |  Suas tentativas restantes: %i\n", pontucao, tentativas);
         printf("\n------------------------------------------------------------------------\n\n");
 
-        //! O jogo encerra o terminal ao passar aq.
-        if (strcmp(toupper(resposta), toupper(palavra)) == 0) {
+        int validacao = strcmp(resposta, palavra);
+        if (validacao == 0) {
             ganhou = 1;
         }
 
-    } while (tentativas > 0 || ganhou == 0);
+    } while (tentativas > 0 && ganhou == 0);
 
     if (tentativas == 0) {
         printf("Obrigado por jogar, espero nos ver em breve.\n\n");
@@ -267,6 +304,7 @@ void play(char tabela[10][100]) {
 int main() {
     int opcao = 0;
     char tabela[10][100] = {""};
+    carregarPalavras(tabela);
     int palavrasDisponiveis = 0;
 
     printf("\n\n------------------------------------------------------------------------\n");
