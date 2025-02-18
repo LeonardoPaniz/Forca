@@ -2,42 +2,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
-#define ARQUIVO "palavras.txt"
+#define ARQUIVO "palavras.bin"
 
 void carregarPalavras(char tabela[10][100]) {
-    FILE *file = fopen(ARQUIVO, "r");
+    FILE *file = fopen(ARQUIVO, "rb");
 
     if (file == NULL) {
         printf("Arquivo de palavras não encontrado. Criando um novo arquivo...\n");
-        file = fopen(ARQUIVO, "w");
+        file = fopen(ARQUIVO, "wb");
         fclose(file);
         return;
     }
 
-    int i = 0;
-    while (fgets(tabela[i], 100, file) != NULL && i < 10) {
-        tabela[i][strcspn(tabela[i], "\n")] = '\0';
-        i++;
-    }
-
+    fread(tabela, sizeof(char), 10 * 100, file);
     fclose(file);
 }
 
 void salvarPalavras(char tabela[10][100]) {
-    FILE *file = fopen(ARQUIVO, "w");
+    FILE *file = fopen(ARQUIVO, "wb");
 
     if (file == NULL) {
         printf("Erro ao salvar as palavras no arquivo.\n");
         return;
     }
 
-    for (int i = 0; i < 10; i++) {
-        if (tabela[i][0] != '\0') {
-            fprintf(file, "%s\n", tabela[i]);
-        }
-    }
-
+    fwrite(tabela, sizeof(char), 10 * 100, file);
     fclose(file);
 }
 
@@ -46,7 +37,6 @@ void cadastrarPalavra(char tabela[10][100]) {
     int livre = -1;
     int haveNumbers = 0;
 
-    system("cls");
     printf("\n\n------------------------------------------------------------------------\n");
     printf("Vamos cadastrar a palavra:\n");
     printf("A palavra não pode ser repetida, deve conter mais de 5 letras.\n");
@@ -54,12 +44,14 @@ void cadastrarPalavra(char tabela[10][100]) {
     printf("Insira a palavra: ");
     scanf(" %[^\n]s", palavra);
 
+    for (int i = 0; palavra[i] != '\0'; i++) {
+        palavra[i] = toupper(palavra[i]);
+    }
+
     if (strlen(palavra) >= 5) {
         for (int i = 0; i < 10; i++) {
             if (strcmp(palavra, tabela[i]) == 0) {
-                printf("------------------------------------------------------------------------\n");
                 printf("Palavra Repetida Detectada = %s\n", palavra);
-                printf("------------------------------------------------------------------------\n");
                 return;
             }
             if (tabela[i][0] == '\0' && livre == -1) {
@@ -78,46 +70,33 @@ void cadastrarPalavra(char tabela[10][100]) {
                 salvarPalavras(tabela);
                 printf("\nPalavra cadastrada com sucesso!\n");
             } else {
-                printf("Palavra contem caracteres invalidos!\n");
+                printf("Palavra contém caracteres inválidos!\n");
             }
         } else {
-            printf("------------------------------------------------------------------------\n");
             printf("A tabela está cheia!\n");
         }
     } else {
         printf("A palavra deve possuir mais de 5 caracteres.\n");
     }
-    printf("------------------------------------------------------------------------\n");
-}
-
-void mostrarPalavras(char tabela[10][100]) {
-    printf("\nPalavras cadastradas:\n");
-    printf("----------------------------------------\n");
-    for (int i = 0; i < 10; i++) {
-        if (tabela[i][0] != '\0') {
-            printf("%d) %s\n", i + 1, tabela[i]);
-        }
-    }
-    printf("----------------------------------------\n");
 }
 
 void atualizarPalavra(char tabela[10][100]) {
-    int option = -1, haveNumbers = 0;
+    int option, haveNumbers = 0;
     char palavra[100];
-    printf("\nSelecione a palavra para atualizar");
+
+    printf("\nSelecione a palavra para atualizar:\n");
     mostrarPalavras(tabela);
     printf("Digite o número da palavra a ser atualizada: ");
-    scanf("%i", &option);
+    scanf("%d", &option);
 
     if (option > 0 && option <= 10 && tabela[option - 1][0] != '\0') {
-        printf("Digite a nova palavra:");
+        printf("Digite a nova palavra: ");
         scanf(" %[^\n]s", palavra);
+
         if (strlen(palavra) >= 5) {
             for (int i = 0; i < 10; i++) {
                 if (strcmp(palavra, tabela[i]) == 0) {
-                    printf("------------------------------------------------------------------------\n");
                     printf("Palavra Repetida Detectada = %s\n", palavra);
-                    printf("------------------------------------------------------------------------\n");
                     return;
                 }
             }
@@ -133,7 +112,7 @@ void atualizarPalavra(char tabela[10][100]) {
                 salvarPalavras(tabela);
                 printf("Palavra Atualizada com sucesso!\n");
             } else {
-                printf("Palavra contem caracteres invalidos!\n");
+                printf("Palavra contém caracteres inválidos!\n");
             }
         } else {
             printf("A palavra deve possuir mais de 5 caracteres.\n");
@@ -144,11 +123,11 @@ void atualizarPalavra(char tabela[10][100]) {
 }
 
 void apagarPalavra(char tabela[10][100]) {
-    int option = -1;
-    printf("\nSelecione a palavra para exclusão");
+    int option;
+    printf("\nSelecione a palavra para exclusão:\n");
     mostrarPalavras(tabela);
     printf("Digite o número da palavra a ser apagada: ");
-    scanf("%i", &option);
+    scanf("%d", &option);
 
     if (option > 0 && option <= 10 && tabela[option - 1][0] != '\0') {
         tabela[option - 1][0] = '\0';
@@ -159,9 +138,19 @@ void apagarPalavra(char tabela[10][100]) {
     }
 }
 
+void mostrarPalavras(char tabela[10][100]) {
+    printf("\nPalavras cadastradas:\n");
+    printf("----------------------------------------\n");
+    for (int i = 0; i < 10; i++) {
+        if (tabela[i][0] != '\0') {
+            printf("%d) %s\n", i + 1, tabela[i]);
+        }
+    }
+    printf("----------------------------------------\n");
+}
 void subMenu(char tabela[10][100]) {
-    int opcao = 0;
-    do {
+    int opcao;
+    while (1) {
         printf("\n----------- SUBMENU -----------\n");
         printf("1) Jogar novamente\n");
         printf("2) Retornar ao menu principal\n");
@@ -173,7 +162,7 @@ void subMenu(char tabela[10][100]) {
         switch (opcao) {
         case 1:
             play(tabela);
-            break;
+            return;
         case 2:
             return;
         case 3:
@@ -184,7 +173,7 @@ void subMenu(char tabela[10][100]) {
         default:
             printf("Opção inválida! Tente novamente.\n");
         }
-    } while (1);
+    }
 }
 
 void play(char tabela[10][100]) {
